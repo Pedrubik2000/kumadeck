@@ -46,7 +46,7 @@
             "type": "shell",
             "group": "none",
             "detail": "Tail the plugin's backend log on the Deck",
-            "command": "ssh ${config:deckuser}@${config:deckip} -p ${config:deckport} ${config:deckkey} 'tail -f -n 100 /home/deck/homebrew/logs/japanese-lookup/*'",
+            "command": "ssh ${config:deckuser}@${config:deckip} -p ${config:deckport} ${config:deckkey} 'tail -f -n 100 /home/deck/homebrew/logs/kumadeck/*'",
             "problemMatcher": []
         },
         {

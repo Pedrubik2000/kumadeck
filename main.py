@@ -1,4 +1,4 @@
-"""Japanese Lookup — Decky plugin backend.
+"""kumadeck — Decky plugin backend (fork of scallsen/japanese-lookup).
 
 Pipeline per trigger press: capture frame via gamescope's PipeWire source →
 OCR (local RapidOCR in a venv subprocess, or Gemini Vision) → rule-based
@@ -74,7 +74,7 @@ async def _read_b64(path: str) -> str:
 class Plugin:
     async def _main(self):
         # One-time migration from the plugin's old folder name ("vn-lookup")
-        # to "japanese-lookup" — safe/idempotent: each call is a no-op once
+        # to "kumadeck" — safe/idempotent: each call is a no-op once
         # the old path is gone. Must run before Settings/etc. below read
         # from SETTINGS_DIR/RUNTIME_DIR/LOG_DIR, which already point at the
         # new location.
@@ -109,7 +109,7 @@ class Plugin:
         except Exception as e:
             logger.error(f"delivery server failed to start: {e}")
 
-        logger.info("Japanese Lookup backend up")
+        logger.info("kumadeck backend up")
 
     async def _unload(self):
         # Must be first: Decky SIGKILLs this process 5s after calling
@@ -157,7 +157,7 @@ class Plugin:
                 plugin_name=decky.DECKY_PLUGIN_NAME,
                 plugins_root=os.path.dirname(PLUGIN_DIR),
                 paths=paths,
-                log_path="/tmp/japanese-lookup-uninstall.log")
+                log_path="/tmp/kumadeck-uninstall.log")
             logger.info(f"uninstall: cleanup watcher started for {paths}")
         except Exception as e:
             logger.error(f"uninstall: couldn't start cleanup watcher: {e}")
@@ -253,11 +253,11 @@ class Plugin:
                 if not runtime_ok:
                     return await self._fail(
                         "Local OCR runtime not installed — install it in "
-                        "the Japanese Lookup settings panel")
+                        "the kumadeck settings panel")
                 if not self.downloader.is_installed():
                     return await self._fail(
                         "OCR models not downloaded — download them in the "
-                        "Japanese Lookup settings panel")
+                        "kumadeck settings panel")
                 result = await self._local_ocr().recognize(
                     full_png, region=region, crop_out=crop_png,
                     min_confidence=float(self.settings.get("min_confidence")))

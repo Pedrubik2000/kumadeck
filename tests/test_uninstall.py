@@ -15,7 +15,7 @@ from vnlookup.uninstall import (
     was_uninstalled,
 )
 
-PLUGIN = "Japanese Lookup"
+PLUGIN = "kumadeck"
 
 
 def _make_plugin(root, folder="vn-lookup", name=PLUGIN):

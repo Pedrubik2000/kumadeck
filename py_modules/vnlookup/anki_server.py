@@ -18,7 +18,7 @@ import time
 
 logger = logging.getLogger(__name__)
 
-FILENAME = "japanese-lookup-export.apkg"
+FILENAME = "kumadeck-export.apkg"
 MAX_S = 300      # hard cap regardless of activity
 GRACE_S = 20     # keep serving this long after the last hit, so a mobile
                  # browser's multi-request "Open in…" download flow (a

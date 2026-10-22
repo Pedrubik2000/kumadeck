@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 PAGE = """<!DOCTYPE html>
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Japanese Lookup</title>
+<title>kumadeck</title>
 <style>
   :root { color-scheme: dark; }
   body { background:#111; color:#eee; font-family: "Noto Sans CJK JP","Hiragino Sans",sans-serif;

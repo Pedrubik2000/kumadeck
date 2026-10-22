@@ -1,11 +1,11 @@
 {
-  "name": "Japanese Lookup",
-  "author": "Simon Callsen",
+  "name": "kumadeck",
+  "author": "Pedrubik2000 (fork of Simon Callsen's Japanese Lookup)",
   "flags": ["debug"],
   "api_version": 1,
   "publish": {
     "tags": ["ocr", "japanese", "yomitan", "anki"],
-    "description": "Capture the current visual-novel text box, OCR it on-device, and send the line to Yomitan for lookup and Anki card creation — without leaving gaming mode.",
+    "description": "Read game dialogue on-device (OCR or text hook), look words up, and mine them into Anki (kuma3) - without leaving gaming mode.",
     "image": "https://opengraph.githubassets.com/1/SteamDeckHomebrew/PluginLoader"
   }
 }

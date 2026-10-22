@@ -18,7 +18,7 @@ DECKPORT=$(cfgget deckport)
 DECKUSER=$(cfgget deckuser)
 DECKPASS=$(cfgget deckpass)
 KEYFILE=$(cfgget deckkey | sed -e 's/^-i //' -e "s|\${env:HOME}|$HOME|")
-PLUGIN_DIR_NAME="japanese-lookup"
+PLUGIN_DIR_NAME="kumadeck"
 REMOTE_PLUGINS="/home/deck/homebrew/plugins"
 
 SSH=(ssh -p "$DECKPORT" -i "$KEYFILE" "$DECKUSER@$DECKIP")
@@ -45,7 +45,7 @@ cp -R dist main.py plugin.json package.json py_modules "$STAGE/$PLUGIN_DIR_NAME/
 # them the moment anything changes, so rsyncing into plugins/ directly is a
 # losing race. Instead: rsync to a deck-owned staging dir, then swap it into
 # place as root (same idea as the template's zip + sudo bsdtar flow).
-REMOTE_STAGE="/home/deck/.japanese-lookup-deploy"
+REMOTE_STAGE="/home/deck/.kumadeck-deploy"
 
 echo "==> Rsyncing plugin to staging dir on Deck"
 # no --chmod: macOS ships openrsync which rejects it; perms are fixed remotely

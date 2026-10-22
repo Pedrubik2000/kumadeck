@@ -81,7 +81,7 @@ class ModelDownloader:
             for url, name, _approx in MANIFEST:
                 dest = os.path.join(self._staging, name)
                 logger.info(f"downloading {url}")
-                req = urllib.request.Request(url, headers={"User-Agent": "japanese-lookup"})
+                req = urllib.request.Request(url, headers={"User-Agent": "kumadeck"})
                 with urllib.request.urlopen(req, timeout=60,
                                             context=ssl_context()) as resp, \
                         open(dest, "wb") as out:

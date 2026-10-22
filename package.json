@@ -1,5 +1,5 @@
 {
-  "name": "japanese-lookup",
+  "name": "kumadeck",
   "version": "0.3.1",
   "description": "Decky plugin: capture VN text boxes, OCR them locally, and pipe the text to Yomitan for lookup and Anki mining — all from gaming mode.",
   "type": "module",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/scallsen/decky-japanese-lookup.git"
+    "url": "git+https://github.com/Pedrubik2000/kumadeck.git"
   },
   "keywords": [
     "decky",

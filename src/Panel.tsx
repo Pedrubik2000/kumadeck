@@ -387,7 +387,7 @@ export const Panel: FC = () => {
 
   if (!settings) {
     return (
-      <PanelSection title="Japanese Lookup">
+      <PanelSection title="kumadeck">
         <PanelSectionRow>Loading…</PanelSectionRow>
       </PanelSection>
     );
@@ -718,8 +718,8 @@ export const Panel: FC = () => {
         <PanelSectionRow>
           <div style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 10 }}>
             <div>Version {status?.version ?? "?"}</div>
-            <div>Developed by Simon Callsen</div>
-            <div>github.com/scallsen/japanese-lookup</div>
+            <div>kumadeck: fork of Japanese Lookup by Simon Callsen</div>
+            <div>github.com/Pedrubik2000/kumadeck</div>
           </div>
           <div style={{ fontSize: 10, opacity: 0.6, lineHeight: 1.5 }}>
             GPL-3.0-or-later; capture, controller-hook, and

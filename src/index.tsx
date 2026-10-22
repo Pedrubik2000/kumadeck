@@ -26,7 +26,7 @@ export default definePlugin(() => {
     const app = Router.MainRunningApp;
     if (!app) return;
     void captureAndMine(button, app.appid).catch((e) => {
-      toaster.toast({ title: "Japanese Lookup", body: `capture failed: ${e}` });
+      toaster.toast({ title: "kumadeck", body: `capture failed: ${e}` });
     });
   });
 
@@ -83,7 +83,7 @@ export default definePlugin(() => {
       // deckyState is TS-private but present at runtime; internal API, so
       // fail soft — worst case the QAM opens on the last-used view.
       try {
-        (window as any).DeckyPluginLoader?.deckyState?.setActivePlugin?.("Japanese Lookup");
+        (window as any).DeckyPluginLoader?.deckyState?.setActivePlugin?.("kumadeck");
       } catch {
         /* decky internals changed; QAM still opens */
       }
@@ -92,7 +92,7 @@ export default definePlugin(() => {
     // a failed capture has no result to show in the sidebar, so a toast is
     // the only feedback for it
     if (ev.stage === "error" && ev.message) {
-      toaster.toast({ title: "Japanese Lookup", body: ev.message });
+      toaster.toast({ title: "kumadeck", body: ev.message });
     }
   };
   addEventListener<[VnlEvent]>("vnl_event", onEvent);
@@ -102,8 +102,8 @@ export default definePlugin(() => {
   routerHook.addGlobalComponent("VnLookupScanOverlay", () => <ScanOverlay />);
 
   return {
-    name: "Japanese Lookup",
-    titleView: <div className={staticClasses.Title}>Japanese Lookup</div>,
+    name: "kumadeck",
+    titleView: <div className={staticClasses.Title}>kumadeck</div>,
     content: <Panel />,
     icon: <FaBookOpen />,
     alwaysRender: true,

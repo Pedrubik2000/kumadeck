@@ -1,3 +1,18 @@
+# kumadeck
+
+A personal fork of [scallsen/japanese-lookup](https://github.com/scallsen/japanese-lookup) (GPL-3.0) for a Steam
+Deck LCD: read a game's dialogue in Game Mode, look a word up, and mine it into Anki. Planned changes, inspired by
+[bee-san/Rubi_for_vita](https://github.com/bee-san/Rubi_for_vita):
+
+- OCR picked by measurement on emulated games and the Yakuza series;
+- Yomitan-style lookup (longest match from the cursor, deinflection) instead of MeCab lemmas;
+- cards sent over Tailscale to the owner's Anki on a PC (AnkiConnect), with the line's audio;
+- text hooks for emulators, checked against OCR.
+
+No releases yet. Everything below is the upstream README.
+
+---
+
 <img width="1280" height="640" alt="gh-hero-image" src="https://github.com/user-attachments/assets/27b3df76-f70a-4cd4-b54a-835f617d3f9b" />
 
 # Japanese Lookup for Decky

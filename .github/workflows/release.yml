@@ -38,7 +38,7 @@ jobs:
       - name: Package plugin
         run: |
           set -euo pipefail
-          PLUGIN_DIR_NAME="japanese-lookup"
+          PLUGIN_DIR_NAME="kumadeck"
           STAGE="$(mktemp -d)/$PLUGIN_DIR_NAME"
           mkdir -p "$STAGE"
           cp -R dist main.py plugin.json package.json py_modules README.md LICENSE "$STAGE/"
