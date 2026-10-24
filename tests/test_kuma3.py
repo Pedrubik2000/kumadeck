@@ -68,7 +68,7 @@ def test_add_card_fields_media_tags(tmp_path):
                                    image_path=str(png), audio_db=audio_db(tmp_path / "a.sqlite")))
     assert r == {"note": 1234, "existing": False}
     assert fake.actions() == ["findNotes", "storeMediaFile", "storeMediaFile", "addNote"]
-    assert fake.calls[0]["params"]["query"] == '"deck:Japanese Mined" "Word:re:^行く(\\[|$)"'
+    assert fake.calls[0]["params"]["query"] == '"deck:Japanese Mined" "Word:re:^行く(\\[|:|$)"'
     audio = fake.calls[2]["params"]
     assert base64.b64decode(audio["data"]) == b"nhk-iku"  # NHK first, by reading
     note = fake.calls[3]["params"]["note"]

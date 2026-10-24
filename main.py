@@ -524,6 +524,7 @@ class Plugin:
         if not self.settings.get("anki_enabled"):
             return {"ok": False, "error": "Anki integration is disabled in settings"}
         url = self.settings.get("kuma3_url")
+        await self._kuma3_idle()
         if self.settings.get("kuma3_enabled") and await kuma3.reachable(url):
             card = {"expression": expression, "reading": reading, "glosses": glosses,
                     "sentence": sentence, "game": game, "surface": surface}
@@ -533,11 +534,11 @@ class Plugin:
                     note_type=self.settings.get("kuma3_note_type"),
                     image_path=await self._card_picture(),
                     audio_db=self.settings.get("kuma3_audio_db"))
-            except (kuma3.Kuma3Error, OSError, ValueError) as e:
+            except Exception as e:  # anything: the panel must not stay on "Adding…"
                 return {"ok": False, "error": f"kuma3: {e}"}
             self._word_states_at = 0.0  # the new word's colour at the next look
             if not r["existing"]:
-                self._kuma3_sync_task = asyncio.create_task(self._kuma3_sync(url))
+                self._start_kuma3_sync(url)
             # the last sync's trouble (it runs after the answer): a full sync can't be answered headless
             return {"ok": True, "id": f"kuma3:{r['note']}", "kuma3": True,
                     "existing": r["existing"], "deck": self.settings.get("kuma3_deck"),
@@ -566,6 +567,15 @@ class Plugin:
             logger.warning(f"card picture stays PNG: {e}")
             return png
 
+    async def _kuma3_idle(self):
+        """Waits for a sync still running: AnkiConnect answers on kuma3's main thread, which the sync holds."""
+        task = getattr(self, "_kuma3_sync_task", None)
+        if task and not task.done():
+            await asyncio.wait({task}, timeout=60)
+
+    def _start_kuma3_sync(self, url: str):
+        self._kuma3_sync_task = asyncio.create_task(self._kuma3_sync(url))
+
     async def _kuma3_sync(self, url: str):
         try:
             await kuma3.sync(url)
@@ -583,11 +593,14 @@ class Plugin:
 
     async def remove_anki_buffer_card(self, card_id: str):
         if card_id.startswith("kuma3:"):  # undo a card just added to kuma3
+            url = self.settings.get("kuma3_url")
+            await self._kuma3_idle()
             try:
-                await kuma3.delete_note(self.settings.get("kuma3_url"), int(card_id[6:]))
-            except (kuma3.Kuma3Error, OSError, ValueError) as e:
+                await kuma3.delete_note(url, int(card_id[6:]))
+            except Exception as e:
                 return {"ok": False, "error": f"kuma3: {e}"}
             self._word_states_at = 0.0
+            self._start_kuma3_sync(url)  # the add's sync may have sent it to AnkiWeb already
             return {"ok": True, "buffered": self.anki_buffer.count()}
         self.anki_buffer.remove(card_id)
         return {"ok": True, "buffered": self.anki_buffer.count()}
@@ -597,10 +610,11 @@ class Plugin:
         if not self.settings.get("kuma3_enabled"):
             return {"ok": False, "states": {}}
         if time.monotonic() - self._word_states_at > 60:
+            await self._kuma3_idle()
             try:
                 states = await kuma3.word_states(self.settings.get("kuma3_url"), self.settings.get("kuma3_deck"))
-            except (kuma3.Kuma3Error, OSError, ValueError):
-                return {"ok": False, "states": {}}
+            except Exception:  # kuma3 away or busy: the colours read last, if any
+                return {"ok": bool(self._word_states), "states": self._word_states}
             self._word_states, self._word_states_at = states, time.monotonic()
         return {"ok": True, "states": self._word_states}
 

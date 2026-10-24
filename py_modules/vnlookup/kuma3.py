@@ -84,15 +84,22 @@ def recording(db_path: str, word: str, reading: str = "") -> bytes | None:
         where, args = "w.term = ? AND (w.reading = ? OR w.reading = '')", (word, reading)
     else:
         where, args = "w.term = ?", (word,)
-    with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as db:
-        row = db.execute("SELECT a.data FROM words w JOIN audio a ON a.source = w.source AND a.file = w.file "
-                         f"WHERE {where} ORDER BY {order} LIMIT 1", args).fetchone()
+    try:  # the SD card's copy: a bad or locked file means no word audio, not a failed card
+        db = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        try:
+            row = db.execute("SELECT a.data FROM words w JOIN audio a ON a.source = w.source AND a.file = w.file "
+                             f"WHERE {where} ORDER BY {order} LIMIT 1", args).fetchone()
+        finally:
+            db.close()
+    except sqlite3.Error:
+        return None
     return row[0] if row else None
 
 
 def mined_query(deck: str, expression: str) -> str:
-    """Anki search for a note of this word in the deck (Word is 'word' or 'word[reading]...')."""
-    return f'"deck:{deck}" "Word:re:^{re.escape(expression)}(\\[|$)"'
+    """Anki search for a note of this word in the deck (Word as kumapie writes it: 'word', 'word[reading]...',
+    'word:0-' with its pitch)."""
+    return f'"deck:{deck}" "Word:re:^{re.escape(expression)}(\\[|:|$)"'
 
 
 async def add_card(url: str, card: dict, *, deck: str, note_type: str, image_path: str | None,
@@ -147,8 +154,8 @@ async def word_states(url: str, deck: str) -> dict[str, str]:
     rank = {"b": 0, "k": 1, "d": 2}  # any due card wins; blue only when every note of the word is new
     states: dict[str, str] = {}
     for n in info:
-        w = spelling(n["fields"].get("Word", {}).get("value", ""))
-        s = "d" if n["noteId"] in due else "k" if n["noteId"] in studied else "b"
+        w = spelling(n.get("fields", {}).get("Word", {}).get("value", ""))  # {} for a note deleted meanwhile
+        s = "d" if n.get("noteId") in due else "k" if n["noteId"] in studied else "b"
         if w and rank[s] > rank.get(states.get(w, ""), -1):
             states[w] = s
     return states
