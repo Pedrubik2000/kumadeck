@@ -119,6 +119,8 @@ export const createAnkiCard = callable<
   // kuma3: added straight into kuma3 on the Deck (deck = where); existing: that word was mined already
   { ok: boolean; buffered?: number; id?: string; error?: string; kuma3?: boolean; existing?: boolean; deck?: string }
 >("create_anki_card");
+// kuma3's mined words: "d" due today, "b" mined and never reviewed, "k" studied (not due); ok = kuma3 answered
+export const getWordStates = callable<[], { ok: boolean; states: Record<string, "d" | "b" | "k"> }>("get_word_states");
 export const clearAnkiBuffer = callable<[], { ok: boolean }>("clear_anki_buffer");
 export const installAnkiExportRuntime = callable<[], { started: boolean }>("install_anki_export_runtime");
 export const exportAnkiBuffer = callable<

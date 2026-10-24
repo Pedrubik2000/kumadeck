@@ -14,6 +14,8 @@ class FakeAnkiConnect:
     def __init__(self):
         self.calls = []
         self.mined = []
+        self.queries = {}  # findNotes query -> note ids (else `mined`)
+        self.notes = []  # notesInfo
         fake = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -21,8 +23,11 @@ class FakeAnkiConnect:
                 req = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
                 fake.calls.append(req)
                 p = req["params"]
-                result = {"version": 6, "findNotes": fake.mined, "addNote": 1234,
-                          "storeMediaFile": p.get("filename"), "deleteNotes": None}[req["action"]]
+                if req["action"] == "findNotes" and fake.queries:
+                    result = fake.queries[p["query"]]
+                else:
+                    result = {"version": 6, "findNotes": fake.mined, "addNote": 1234, "notesInfo": fake.notes,
+                              "storeMediaFile": p.get("filename"), "deleteNotes": None}[req["action"]]
                 body = json.dumps({"result": result, "error": None}).encode()
                 self.send_response(200)
                 self.send_header("Content-Length", str(len(body)))
@@ -91,6 +96,27 @@ def test_kana_word_no_reading_no_bold_when_conjugated():
     assert kuma3.word_field("すごい", "すごい") == "すごい"
     assert kuma3.bold_sentence("行こう<よ>", "行く") == "行こう&lt;よ&gt;"
     assert kuma3.bold_sentence("行こう<よ>", "行こう") == "<b>行こう</b>&lt;よ&gt;"
+
+
+def test_spelling_as_kumapie_reads_word_fields():
+    assert kuma3.spelling("行く[いく]:0-") == "行く"
+    assert kuma3.spelling("日本[にほん] 語[ご]:0-") == "日本語"
+    assert kuma3.spelling(r"拾[ひろ]\う:0") == "拾う"
+    assert kuma3.spelling("<b>すごい</b>") == "すごい"
+
+
+def test_word_states_due_new_studied():
+    fake = FakeAnkiConnect()
+    deck = '"deck:Japanese Mined"'
+    fake.queries = {deck: [1, 2, 3, 4], deck + " is:due": [1], deck + " -is:new": [1, 3, 4]}
+    word = lambda nid, w: {"noteId": nid, "fields": {"Word": {"value": w, "order": 2}}}  # noqa: E731
+    fake.notes = [word(1, "行く[いく]:0-"), word(2, "爆炎[ばくえん]"), word(3, "すごい"), word(4, "爆炎")]
+    states = asyncio.run(kuma3.word_states(fake.url, "Japanese Mined"))
+    # 爆炎: one note never reviewed, one studied -> studied (blue only when every note is new)
+    assert states == {"行く": "d", "爆炎": "k", "すごい": "k"}
+    fake.queries = {deck: [2], deck + " is:due": [], deck + " -is:new": []}
+    fake.notes = [word(2, "爆炎[ばくえん]")]
+    assert asyncio.run(kuma3.word_states(fake.url, "Japanese Mined")) == {"爆炎": "b"}
 
 
 def test_reachable_and_delete():

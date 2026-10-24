@@ -97,6 +97,7 @@ class Plugin:
             os.path.join(RUNTIME_DIR, "dictionary.sqlite3"),
             os.path.join(RUNTIME_DIR, "dicts"))
         self._token_cache = {"text": None, "tokens": []}
+        self._word_states, self._word_states_at = {}, 0.0
 
         self._busy = False
         self._last_result = None
@@ -533,6 +534,7 @@ class Plugin:
                     audio_db=self.settings.get("kuma3_audio_db"))
             except (kuma3.Kuma3Error, OSError, ValueError) as e:
                 return {"ok": False, "error": f"kuma3: {e}"}
+            self._word_states_at = 0.0  # the new word's colour at the next look
             if not r["existing"]:
                 self._kuma3_sync_task = asyncio.create_task(self._kuma3_sync(url))
             return {"ok": True, "id": f"kuma3:{r['note']}", "kuma3": True,
@@ -568,9 +570,22 @@ class Plugin:
                 await kuma3.delete_note(self.settings.get("kuma3_url"), int(card_id[6:]))
             except (kuma3.Kuma3Error, OSError, ValueError) as e:
                 return {"ok": False, "error": f"kuma3: {e}"}
+            self._word_states_at = 0.0
             return {"ok": True, "buffered": self.anki_buffer.count()}
         self.anki_buffer.remove(card_id)
         return {"ok": True, "buffered": self.anki_buffer.count()}
+
+    async def get_word_states(self):
+        """kuma3's mined words for the line's colours ({word: "d"|"b"|"k"}), read again after a minute."""
+        if not self.settings.get("kuma3_enabled"):
+            return {"ok": False, "states": {}}
+        if time.monotonic() - self._word_states_at > 60:
+            try:
+                states = await kuma3.word_states(self.settings.get("kuma3_url"), self.settings.get("kuma3_deck"))
+            except (kuma3.Kuma3Error, OSError, ValueError):
+                return {"ok": False, "states": {}}
+            self._word_states, self._word_states_at = states, time.monotonic()
+        return {"ok": True, "states": self._word_states}
 
     async def install_anki_export_runtime(self):
         return {"started": self.installer.start_install_anki()}

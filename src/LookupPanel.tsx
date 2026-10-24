@@ -14,6 +14,7 @@ import { FC, useEffect, useRef, useState } from "react";
 import { FaMinus, FaPlus } from "react-icons/fa";
 import {
   createAnkiCard,
+  getWordStates,
   DictEntry,
   getLookupStatus,
   importDictionaries,
@@ -30,6 +31,10 @@ import { onFirstWordFocusRequest, takeFirstWordFocus } from "./firstWordFocus";
 // auxiliaries — you rarely look them up, and skipping them makes D-pad
 // navigation step word-to-word instead of morpheme-to-morpheme.
 const GRAMMAR_POS = new Set(["助詞", "助動詞"]);
+
+// kumapie's word colours: green a card due today, blue mined and never reviewed, red no card of its own; studied
+// words stay the normal colour. Only when kuma3 answers (else no colours at all).
+const WORD_COLOURS = { d: "#7CC47F", b: "#6FA8FF", u: "#FF6B6B" } as const;
 
 const isContentWord = (t: Token) =>
   t.selectable && !GRAMMAR_POS.has(t.pos);
@@ -67,6 +72,14 @@ export const LookupSection: FC<{
 }> = ({ sentence, confidence, ankiEnabled }) => {
   const [status, setStatus] = useState<LookupStatus | null>(null);
   const [tokens, setTokens] = useState<Token[]>([]);
+  const [wordStates, setWordStates] = useState<Record<string, string> | null>(null);
+  const refreshStates = () =>
+    void getWordStates().then((r) => alive.current && setWordStates(r.ok ? r.states : null));
+  const colourOf = (t: Token): string | undefined => {
+    if (!wordStates) return undefined;
+    const s = wordStates[t.dict_form] ?? wordStates[t.surface] ?? "u";
+    return WORD_COLOURS[s as keyof typeof WORD_COLOURS];
+  };
   const [sel, setSel] = useState<[number, number] | null>(null); // token index range
   const [focused, setFocused] = useState<number | null>(null);
   const [focusedEntry, setFocusedEntry] = useState<number | null>(null);
@@ -124,6 +137,7 @@ export const LookupSection: FC<{
       if (!alive.current || !r.ok || !r.tokens) return;
       tokensFor.current = sentence;
       setTokens(r.tokens);
+      refreshStates();
     });
   }, [sentence, status?.runtime_installed]);
 
@@ -236,6 +250,7 @@ export const LookupSection: FC<{
         });
       }
       const from = bufferedId.startsWith("kuma3:") ? "kuma3" : "Anki queue";
+      if (r.ok && from === "kuma3") refreshStates();
       setMessage(r.ok ? `✓ Removed ${e.expression} from ${from}` : "✗ failed to remove");
       return;
     }
@@ -246,6 +261,7 @@ export const LookupSection: FC<{
     const r = await createAnkiCard(
       e.expression, e.reading, e.glosses, sentence ?? "", game, e.word_type, surface);
     if (r.ok && r.id && !r.existing) setQueued((prev) => ({ ...prev, [key]: r.id! }));
+    if (r.ok && r.kuma3) refreshStates();
     setMessage(
       !r.ok ? `✗ ${r.error}`
         : r.existing ? `✓ ${e.expression} is already in ${r.deck}`
@@ -382,7 +398,7 @@ export const LookupSection: FC<{
                           : inSel
                           ? "rgba(26,159,255,0.35)"
                           : "transparent",
-                        color: isFocused ? "#111" : "#e8e8e8",
+                        color: isFocused ? "#111" : colourOf(t) ?? "#e8e8e8",
                         borderRadius: 3,
                         borderBottom: isFocused
                           ? "2px solid transparent"

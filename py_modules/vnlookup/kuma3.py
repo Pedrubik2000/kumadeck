@@ -126,6 +126,34 @@ async def add_card(url: str, card: dict, *, deck: str, note_type: str, image_pat
     return {"note": note, "existing": False}
 
 
+def spelling(field: str) -> str:
+    """A Word field's word as written (kumapie's CardIndex.japaneseKeys): 日本[にほん] 語[ご]:0- -> 日本語."""
+    s = html.unescape(re.sub(r"<[^>]*>", "", field))
+    s = re.sub(r"[/*\\-]", "", re.sub(r":[0-9A-Za-z\-]*", "", s))
+    return re.sub(r"\s", "", re.sub(r"([^\s\[\]]+)\[[^\]]*\]", r"\1", s))
+
+
+async def word_states(url: str, deck: str) -> dict[str, str]:
+    """Each mined word -> "d" a card due today, "b" mined and never reviewed, "k" studied and not due (kumapie's
+    CardIndex.state; a word with no note here is red in the panel)."""
+    # ponytail: "due" is Anki's is:due (the card's own due date), not kuma3's RWKV-Instant queue as on the phone
+    q = f'"deck:{deck}"'
+    notes = await call(url, "findNotes", query=q)
+    if not notes:
+        return {}
+    info = await call(url, "notesInfo", notes=notes)
+    due = set(await call(url, "findNotes", query=q + " is:due"))
+    studied = set(await call(url, "findNotes", query=q + " -is:new"))
+    rank = {"b": 0, "k": 1, "d": 2}  # any due card wins; blue only when every note of the word is new
+    states: dict[str, str] = {}
+    for n in info:
+        w = spelling(n["fields"].get("Word", {}).get("value", ""))
+        s = "d" if n["noteId"] in due else "k" if n["noteId"] in studied else "b"
+        if w and rank[s] > rank.get(states.get(w, ""), -1):
+            states[w] = s
+    return states
+
+
 async def delete_note(url: str, note: int) -> None:
     await call(url, "deleteNotes", notes=[note])
 
