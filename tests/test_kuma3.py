@@ -119,6 +119,11 @@ def test_word_states_due_new_studied():
     assert asyncio.run(kuma3.word_states(fake.url, "Japanese Mined")) == {"爆炎": "b"}
 
 
+def test_sync_trouble_in_words():
+    assert "full sync" in kuma3.sync_trouble("Sync status 2 not one of [0, 1] - see SyncCollectionResponse")
+    assert kuma3.sync_trouble("sync: auth not configured") == "kuma3 isn't logged in to AnkiWeb"
+
+
 def test_reachable_and_delete():
     fake = FakeAnkiConnect()
     assert asyncio.run(kuma3.reachable(fake.url))

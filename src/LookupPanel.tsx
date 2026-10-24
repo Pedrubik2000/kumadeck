@@ -265,7 +265,7 @@ export const LookupSection: FC<{
     setMessage(
       !r.ok ? `✗ ${r.error}`
         : r.existing ? `✓ ${e.expression} is already in ${r.deck}`
-        : r.kuma3 ? `✓ Added ${e.expression} to ${r.deck}`
+        : r.kuma3 ? `✓ Added ${e.expression} to ${r.deck}` + (r.sync_error ? ` · ${r.sync_error}` : "")
         : `✓ Added ${e.expression} to Anki queue`);
   };
 

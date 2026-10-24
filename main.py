@@ -98,6 +98,7 @@ class Plugin:
             os.path.join(RUNTIME_DIR, "dicts"))
         self._token_cache = {"text": None, "tokens": []}
         self._word_states, self._word_states_at = {}, 0.0
+        self._kuma3_sync_error = ""
 
         self._busy = False
         self._last_result = None
@@ -537,8 +538,10 @@ class Plugin:
             self._word_states_at = 0.0  # the new word's colour at the next look
             if not r["existing"]:
                 self._kuma3_sync_task = asyncio.create_task(self._kuma3_sync(url))
+            # the last sync's trouble (it runs after the answer): a full sync can't be answered headless
             return {"ok": True, "id": f"kuma3:{r['note']}", "kuma3": True,
-                    "existing": r["existing"], "deck": self.settings.get("kuma3_deck")}
+                    "existing": r["existing"], "deck": self.settings.get("kuma3_deck"),
+                    "sync_error": self._kuma3_sync_error}
         card = self.anki_buffer.add(expression, reading, glosses, sentence, game, word_type)
         return {"ok": True, "buffered": self.anki_buffer.count(), "id": card["id"]}
 
@@ -566,8 +569,10 @@ class Plugin:
     async def _kuma3_sync(self, url: str):
         try:
             await kuma3.sync(url)
+            self._kuma3_sync_error = ""
         except Exception as e:  # a missed sync is retried by the next card or kuma3 itself
             logger.warning(f"kuma3 sync failed: {e}")
+            self._kuma3_sync_error = kuma3.sync_trouble(str(e))
 
     async def clear_anki_buffer(self):
         self.anki_buffer.clear()

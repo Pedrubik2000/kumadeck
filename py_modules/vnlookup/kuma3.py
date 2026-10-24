@@ -161,3 +161,13 @@ async def delete_note(url: str, note: int) -> None:
 async def sync(url: str) -> None:
     """AnkiWeb sync after a card; a long one is fine to miss (kuma3 syncs again later)."""
     await call(url, "sync", timeout=120)
+
+
+def sync_trouble(error: str) -> str:
+    """AnkiConnect's sync error in words for the panel (it refuses a full sync rather than ask)."""
+    if "auth not configured" in error:
+        return "kuma3 isn't logged in to AnkiWeb"
+    if "Sync status" in error:
+        # only one kuma3 per profile: the hidden one must stop before its window opens
+        return "AnkiWeb wants a full sync: in Desktop Mode stop kuma3-headless, open kuma3, sync once"
+    return f"kuma3 didn't sync ({error[:80]})"
