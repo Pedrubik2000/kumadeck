@@ -73,8 +73,9 @@ export const LookupSection: FC<{
   const [status, setStatus] = useState<LookupStatus | null>(null);
   const [tokens, setTokens] = useState<Token[]>([]);
   const [wordStates, setWordStates] = useState<Record<string, string> | null>(null);
-  const refreshStates = () =>
-    void getWordStates().then((r) => alive.current && setWordStates(r.ok ? r.states : null));
+  const refreshStates = (ts: Token[] = tokens) =>
+    void getWordStates([...new Set(ts.flatMap((t) => [t.dict_form, t.surface]))])
+      .then((r) => alive.current && setWordStates(r.ok ? r.states : null));
   const colourOf = (t: Token): string | undefined => {
     if (!wordStates) return undefined;
     const s = wordStates[t.dict_form] ?? wordStates[t.surface] ?? "u";
@@ -137,7 +138,7 @@ export const LookupSection: FC<{
       if (!alive.current || !r.ok || !r.tokens) return;
       tokensFor.current = sentence;
       setTokens(r.tokens);
-      refreshStates();
+      refreshStates(r.tokens);
     });
   }, [sentence, status?.runtime_installed]);
 

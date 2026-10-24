@@ -57,6 +57,9 @@ DEFAULTS: dict[str, Any] = {
     "kuma3_deck": "Japanese Mined",
     "kuma3_note_type": "🐻 Japanese",
     "kuma3_audio_db": "/run/media/deck/GF8S5/kumadeck/ja-audio.sqlite",
+    # the PC's kumapie server (dojo-feed) and whose known words to read from it (known.py); blank = none
+    "kumapie_server": "",
+    "kumapie_person": "pedro",
 }
 
 # settings keys retired by past versions — dropped from stored JSON on load

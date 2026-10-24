@@ -121,7 +121,7 @@ export const createAnkiCard = callable<
     sync_error?: string }
 >("create_anki_card");
 // kuma3's mined words: "d" due today, "b" mined and never reviewed, "k" studied (not due); ok = kuma3 answered
-export const getWordStates = callable<[], { ok: boolean; states: Record<string, "d" | "b" | "k"> }>("get_word_states");
+export const getWordStates = callable<[words: string[]], { ok: boolean; states: Record<string, "d" | "b" | "k"> }>("get_word_states");
 export const clearAnkiBuffer = callable<[], { ok: boolean }>("clear_anki_buffer");
 export const installAnkiExportRuntime = callable<[], { started: boolean }>("install_anki_export_runtime");
 export const exportAnkiBuffer = callable<

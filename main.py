@@ -24,6 +24,7 @@ from vnlookup.deliver import DeliveryServer
 from vnlookup.deps import RuntimeInstaller
 from vnlookup.dictionary import Dictionary
 from vnlookup.hid_monitor import HidrawButtonMonitor
+from vnlookup.known import KnownWords
 from vnlookup.models import ModelDownloader
 from vnlookup.ocr import GeminiBackend, OCRError, RapidOCRBackend, tokenize
 from vnlookup.settings import Settings
@@ -99,6 +100,7 @@ class Plugin:
         self._token_cache = {"text": None, "tokens": []}
         self._word_states, self._word_states_at = {}, 0.0
         self._kuma3_sync_error = ""
+        self.known = KnownWords(SETTINGS_DIR)
 
         self._busy = False
         self._last_result = None
@@ -605,18 +607,21 @@ class Plugin:
         self.anki_buffer.remove(card_id)
         return {"ok": True, "buffered": self.anki_buffer.count()}
 
-    async def get_word_states(self):
-        """kuma3's mined words for the line's colours ({word: "d"|"b"|"k"}), read again after a minute."""
-        if not self.settings.get("kuma3_enabled"):
-            return {"ok": False, "states": {}}
-        if time.monotonic() - self._word_states_at > 60:
+    async def get_word_states(self, words=None):
+        """The line's colours for [words]: kuma3's mined cards ("d" due, "b" never reviewed, "k" studied), else
+        "k" for a word the phones show as known (kumapie's list from the PC); missing = no card (red)."""
+        await asyncio.to_thread(self.known.refresh, self.settings.get("kumapie_server"),
+                                self.settings.get("kumapie_person"))
+        if self.settings.get("kuma3_enabled") and time.monotonic() - self._word_states_at > 60:
             await self._kuma3_idle()
             try:
-                states = await kuma3.word_states(self.settings.get("kuma3_url"), self.settings.get("kuma3_deck"))
+                self._word_states = await kuma3.word_states(self.settings.get("kuma3_url"),
+                                                             self.settings.get("kuma3_deck"))
+                self._word_states_at = time.monotonic()
             except Exception:  # kuma3 away or busy: the colours read last, if any
-                return {"ok": bool(self._word_states), "states": self._word_states}
-            self._word_states, self._word_states_at = states, time.monotonic()
-        return {"ok": True, "states": self._word_states}
+                pass
+        states = {w: self._word_states.get(w) or ("k" if w in self.known.words else None) for w in words or ()}
+        return {"ok": bool(self.known.words or self._word_states), "states": {w: s for w, s in states.items() if s}}
 
     async def install_anki_export_runtime(self):
         return {"started": self.installer.start_install_anki()}
