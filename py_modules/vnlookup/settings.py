@@ -49,6 +49,14 @@ DEFAULTS: dict[str, Any] = {
     # the running game's display name at capture time, written to the back
     # of the card only (see ROLE_ORDER in anki_export_worker.py)
     "anki_game_field": "Game",
+    # kuma3 desktop on the Deck (AnkiConnect Extended, kuma3-headless.service):
+    # cards go straight in as 🐻 Japanese notes when it answers, else into the
+    # .apkg buffer above
+    "kuma3_enabled": True,
+    "kuma3_url": "http://127.0.0.1:8765",
+    "kuma3_deck": "Japanese Mined",
+    "kuma3_note_type": "🐻 Japanese",
+    "kuma3_audio_db": "/run/media/deck/GF8S5/kumadeck/ja-audio.sqlite",
 }
 
 # settings keys retired by past versions — dropped from stored JSON on load

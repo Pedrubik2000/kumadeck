@@ -15,7 +15,7 @@ import time
 import uuid
 
 import decky
-from vnlookup import cleanup
+from vnlookup import cleanup, kuma3
 from vnlookup.anki_export import AnkiExportError, build_apkg
 from vnlookup.anki_server import AnkiExportServer
 from vnlookup.buffer import PendingCards
@@ -517,11 +517,43 @@ class Plugin:
     async def create_anki_card(self, expression: str, reading: str,
                                glosses: str, sentence: str, game: str = "",
                                word_type: str = ""):
-        """Buffer a card for later batch export as a .apkg via QR code."""
+        """Into kuma3 on the Deck when it answers (a 🐻 Japanese note in
+        Japanese Mined, then an AnkiWeb sync); else buffered for a .apkg."""
         if not self.settings.get("anki_enabled"):
             return {"ok": False, "error": "Anki integration is disabled in settings"}
+        url = self.settings.get("kuma3_url")
+        if self.settings.get("kuma3_enabled") and await kuma3.reachable(url):
+            card = {"expression": expression, "reading": reading, "glosses": glosses,
+                    "sentence": sentence, "game": game}
+            try:
+                r = await kuma3.add_card(
+                    url, card, deck=self.settings.get("kuma3_deck"),
+                    note_type=self.settings.get("kuma3_note_type"),
+                    image_path=self._latest_full_capture(),
+                    audio_db=self.settings.get("kuma3_audio_db"))
+            except (kuma3.Kuma3Error, OSError, ValueError) as e:
+                return {"ok": False, "error": f"kuma3: {e}"}
+            if not r["existing"]:
+                self._kuma3_sync_task = asyncio.create_task(self._kuma3_sync(url))
+            return {"ok": True, "id": f"kuma3:{r['note']}", "kuma3": True,
+                    "existing": r["existing"], "deck": self.settings.get("kuma3_deck")}
         card = self.anki_buffer.add(expression, reading, glosses, sentence, game, word_type)
         return {"ok": True, "buffered": self.anki_buffer.count(), "id": card["id"]}
+
+    def _latest_full_capture(self):
+        """The newest in-game frame (never the editor's preview, which can show the UI)."""
+        try:
+            files = [os.path.join(CAPTURES_DIR, f) for f in os.listdir(CAPTURES_DIR)
+                     if f.startswith("capture_")]
+        except OSError:
+            return None
+        return max(files, key=os.path.getmtime) if files else None
+
+    async def _kuma3_sync(self, url: str):
+        try:
+            await kuma3.sync(url)
+        except Exception as e:  # a missed sync is retried by the next card or kuma3 itself
+            logger.warning(f"kuma3 sync failed: {e}")
 
     async def clear_anki_buffer(self):
         self.anki_buffer.clear()
@@ -531,6 +563,12 @@ class Plugin:
         return {"cards": self.anki_buffer.all()}
 
     async def remove_anki_buffer_card(self, card_id: str):
+        if card_id.startswith("kuma3:"):  # undo a card just added to kuma3
+            try:
+                await kuma3.delete_note(self.settings.get("kuma3_url"), int(card_id[6:]))
+            except (kuma3.Kuma3Error, OSError, ValueError) as e:
+                return {"ok": False, "error": f"kuma3: {e}"}
+            return {"ok": True, "buffered": self.anki_buffer.count()}
         self.anki_buffer.remove(card_id)
         return {"ok": True, "buffered": self.anki_buffer.count()}
 

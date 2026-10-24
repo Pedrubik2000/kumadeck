@@ -235,15 +235,20 @@ export const LookupSection: FC<{
           return next;
         });
       }
-      setMessage(r.ok ? `✓ Removed ${e.expression} from Anki queue` : "✗ failed to remove");
+      const from = bufferedId.startsWith("kuma3:") ? "kuma3" : "Anki queue";
+      setMessage(r.ok ? `✓ Removed ${e.expression} from ${from}` : "✗ failed to remove");
       return;
     }
     setMessage("Adding…");
     const game = Router.MainRunningApp?.display_name ?? "";
     const r = await createAnkiCard(
       e.expression, e.reading, e.glosses, sentence ?? "", game, e.word_type);
-    if (r.ok && r.id) setQueued((prev) => ({ ...prev, [key]: r.id! }));
-    setMessage(r.ok ? `✓ Added ${e.expression} to Anki queue` : `✗ ${r.error}`);
+    if (r.ok && r.id && !r.existing) setQueued((prev) => ({ ...prev, [key]: r.id! }));
+    setMessage(
+      !r.ok ? `✗ ${r.error}`
+        : r.existing ? `✓ ${e.expression} is already in ${r.deck}`
+        : r.kuma3 ? `✓ Added ${e.expression} to ${r.deck}`
+        : `✓ Added ${e.expression} to Anki queue`);
   };
 
   // ---- setup states ------------------------------------------------------

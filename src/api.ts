@@ -115,7 +115,8 @@ export const createAnkiCard = callable<
     game: string,
     wordType: string,
   ],
-  { ok: boolean; buffered?: number; id?: string; error?: string }
+  // kuma3: added straight into kuma3 on the Deck (deck = where); existing: that word was mined already
+  { ok: boolean; buffered?: number; id?: string; error?: string; kuma3?: boolean; existing?: boolean; deck?: string }
 >("create_anki_card");
 export const clearAnkiBuffer = callable<[], { ok: boolean }>("clear_anki_buffer");
 export const installAnkiExportRuntime = callable<[], { started: boolean }>("install_anki_export_runtime");
