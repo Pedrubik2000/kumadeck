@@ -241,8 +241,10 @@ export const LookupSection: FC<{
     }
     setMessage("Adding…");
     const game = Router.MainRunningApp?.display_name ?? "";
+    // the word as it stands in the line (行こう for 行く), bolded in the card's sentence
+    const surface = sel ? tokens.slice(sel[0], sel[1] + 1).map((t) => t.surface).join("") : "";
     const r = await createAnkiCard(
-      e.expression, e.reading, e.glosses, sentence ?? "", game, e.word_type);
+      e.expression, e.reading, e.glosses, sentence ?? "", game, e.word_type, surface);
     if (r.ok && r.id && !r.existing) setQueued((prev) => ({ ...prev, [key]: r.id! }));
     setMessage(
       !r.ok ? `✗ ${r.error}`

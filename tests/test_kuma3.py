@@ -90,6 +90,7 @@ def test_already_mined_adds_nothing(tmp_path):
 def test_kana_word_no_reading_no_bold_when_conjugated():
     assert kuma3.word_field("すごい", "すごい") == "すごい"
     assert kuma3.bold_sentence("行こう<よ>", "行く") == "行こう&lt;よ&gt;"
+    assert kuma3.bold_sentence("行こう<よ>", "行こう") == "<b>行こう</b>&lt;よ&gt;"
 
 
 def test_reachable_and_delete():

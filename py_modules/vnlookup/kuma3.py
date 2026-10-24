@@ -62,8 +62,7 @@ def word_field(expression: str, reading: str) -> str:
 
 
 def bold_sentence(sentence: str, expression: str) -> str:
-    # ponytail: bolds the dictionary form only when it appears as written; a conjugated
-    # word (行こう for 行く) stays plain until the frontend passes the surface form.
+    """The sentence with the word's first appearance in <b> (the word as it stands in the line: 行こう)."""
     at = sentence.find(expression) if expression else -1
     if at < 0:
         return html.escape(sentence)
@@ -105,7 +104,7 @@ async def add_card(url: str, card: dict, *, deck: str, note_type: str, image_pat
         return {"note": found[0], "existing": True}
     stamp = int(time.time() * 1000)
     fields = {
-        "Sentence": bold_sentence(card.get("sentence", ""), expression),
+        "Sentence": bold_sentence(card.get("sentence", ""), card.get("surface") or expression),
         "Word": word_field(expression, reading),
         "Definition (bilingual)": html.escape(card.get("glosses", "")).replace("\n", "<br>"),
         "Context": html.escape(f"Mined in kumadeck: {card['game']}." if card.get("game") else "Mined in kumadeck."),

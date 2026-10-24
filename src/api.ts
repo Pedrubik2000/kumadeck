@@ -114,6 +114,7 @@ export const createAnkiCard = callable<
     sentence: string,
     game: string,
     wordType: string,
+    surface: string,
   ],
   // kuma3: added straight into kuma3 on the Deck (deck = where); existing: that word was mined already
   { ok: boolean; buffered?: number; id?: string; error?: string; kuma3?: boolean; existing?: boolean; deck?: string }

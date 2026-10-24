@@ -516,7 +516,7 @@ class Plugin:
 
     async def create_anki_card(self, expression: str, reading: str,
                                glosses: str, sentence: str, game: str = "",
-                               word_type: str = ""):
+                               word_type: str = "", surface: str = ""):
         """Into kuma3 on the Deck when it answers (a 🐻 Japanese note in
         Japanese Mined, then an AnkiWeb sync); else buffered for a .apkg."""
         if not self.settings.get("anki_enabled"):
@@ -524,7 +524,7 @@ class Plugin:
         url = self.settings.get("kuma3_url")
         if self.settings.get("kuma3_enabled") and await kuma3.reachable(url):
             card = {"expression": expression, "reading": reading, "glosses": glosses,
-                    "sentence": sentence, "game": game}
+                    "sentence": sentence, "game": game, "surface": surface}
             try:
                 r = await kuma3.add_card(
                     url, card, deck=self.settings.get("kuma3_deck"),
