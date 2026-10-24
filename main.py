@@ -530,7 +530,7 @@ class Plugin:
                 r = await kuma3.add_card(
                     url, card, deck=self.settings.get("kuma3_deck"),
                     note_type=self.settings.get("kuma3_note_type"),
-                    image_path=self._latest_full_capture(),
+                    image_path=await self._card_picture(),
                     audio_db=self.settings.get("kuma3_audio_db"))
             except (kuma3.Kuma3Error, OSError, ValueError) as e:
                 return {"ok": False, "error": f"kuma3: {e}"}
@@ -550,6 +550,18 @@ class Plugin:
         except OSError:
             return None
         return max(files, key=os.path.getmtime) if files else None
+
+    async def _card_picture(self):
+        """The newest in-game frame as .webp for the card (the OCR runtime's Pillow), else the PNG itself."""
+        png = self._latest_full_capture()
+        if not png or not self.installer.is_installed():
+            return png
+        webp = os.path.join(RUNTIME_DIR, "card.webp")
+        try:
+            return await self._local_ocr().crop(png, None, webp)
+        except OCRError as e:
+            logger.warning(f"card picture stays PNG: {e}")
+            return png
 
     async def _kuma3_sync(self, url: str):
         try:

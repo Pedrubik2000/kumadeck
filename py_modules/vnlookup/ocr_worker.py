@@ -52,7 +52,11 @@ def _load_and_crop(image_path, region, crop_out):
             img = img.crop((left, top, right, bottom))
             offset = (left, top)
     if crop_out:
-        img.save(crop_out, "PNG")
+        # a card's picture goes out as .webp (~1/10 of the PNG, synced to every phone); OCR crops stay PNG
+        if crop_out.endswith(".webp"):
+            img.save(crop_out, "WEBP", quality=80)
+        else:
+            img.save(crop_out, "PNG")
     return img, offset
 
 
